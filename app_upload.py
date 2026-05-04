@@ -3,7 +3,7 @@ from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 import google.generativeai as genai
 from PIL import Image
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import json
 import os
 import re
@@ -127,6 +127,7 @@ CURRENT_DB = st.session_state['auth']['db']
 # ==========================================
 # 4. 분석 기능 (수정 사항 반영)
 # ==========================================
+KST = timezone(timedelta(hours=9))
 st.title("🍱 오늘의 식단 기록하기")
 img_file = st.file_uploader("", type=['png', 'jpg', 'jpeg'])
 
@@ -165,8 +166,8 @@ if img_file:
 
                 data = load_data(CURRENT_DB)
                 data.append({
-                    "id": datetime.now().timestamp(),
-                    "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                    "id": datetime.now(KST).timestamp(),
+                    "date": datetime.now(KST).strftime("%Y-%m-%d %H:%M"),
                     "grade": grade,
                     "food": food_name[:30],
                     "full_text": result_text,
@@ -205,12 +206,23 @@ if history:
             for i, item in sorted(monthly_data[month], key=lambda x: x[1]['date'], reverse=True):
                 spec = get_grade_detail(item['grade'])
                 with st.expander(f"{spec['icon']} {item['date']} | {item['food']} ({item['grade']})"):
+                    
+                    # --- [수정 구간 시작] 사진 공백 제거 및 중앙 정렬 ---
                     if "thumb" in item:
                         st.markdown(
-                            f'<img src="data:image/jpeg;base64,{item["thumb"]}" style="width: 100%; border-radius: 12px; margin-bottom:10px;">',
-                            unsafe_allow_html=True)
-                    st.markdown(f"""<div style="border-left: 5px solid {spec['border']}; background-color: {spec['bg']}; padding: 15px; color: #333;">
+                            f"""
+                            <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                                <img src="data:image/jpeg;base64,{item['thumb']}" 
+                                     style="max-width: 100%; height: auto; border-radius: 12px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1);">
+                            </div>
+                            """, 
+                            unsafe_allow_html=True
+                        )
+                    # --- [수정 구간 끝] ---
+            
+                    st.markdown(f"""<div style="border-left: 5px solid {spec['border']}; background-color: {spec['bg']}; padding: 15px; color: #333; border-radius: 0 8px 8px 0;">
                                     {item['full_text'].replace(chr(10), '<br>')}</div>""", unsafe_allow_html=True)
+                    
                     if st.button("🗑️ 삭제", key=f"del_{i}"):
                         data = load_data(CURRENT_DB)
                         data.pop(i)

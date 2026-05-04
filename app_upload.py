@@ -39,9 +39,9 @@ def save_data(db_path, data_list):
 
 def make_thumbnail(image):
     img = image.copy()
-    img.thumbnail((500, 500))
+    img.thumbnail((200, 200))
     buffered = io.BytesIO()
-    img.convert("RGB").save(buffered, format="JPEG", quality=85)
+    img.convert("RGB").save(buffered, format="JPEG", quality=60)
     return base64.b64encode(buffered.getvalue()).decode()
 
 

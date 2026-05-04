@@ -32,8 +32,16 @@ def load_data(db_path):
         return []
 
 def save_data(db_path, data_list):
-    # 리스트 데이터를 표(DataFrame)로 변환해서 시트에 저장
-    df = pd.DataFrame(data_list)
+    # 만약 데이터가 비어있다면 (리스트가 [] 인 경우)
+    if not data_list:
+        # 빈 데이터프레임을 만들되, 컬럼명(항목 이름)은 유지해주는 게 좋습니다.
+        # 기존 시트의 헤더 컬럼 이름들을 적어주세요.
+        df = pd.DataFrame(columns=["id", "date", "food", "grade", "full_text", "thumb"])
+    else:
+        # 데이터가 있으면 정상적으로 변환
+        df = pd.DataFrame(data_list)
+    
+    # 구글 시트 업데이트
     conn.update(data=df)
 
 

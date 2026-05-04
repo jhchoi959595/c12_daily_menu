@@ -1,4 +1,6 @@
 import streamlit as st
+from streamlit_gsheets import GSheetsConnection
+import pandas as pd
 import google.generativeai as genai
 from PIL import Image
 from datetime import datetime
@@ -19,20 +21,20 @@ MY_KEY = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=MY_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash')
 
+conn = st.connection("gsheets", type=GSheetsConnection)
 
 def load_data(db_path):
-    if os.path.exists(db_path):
-        try:
-            with open(db_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except:
-            return []
-    return []
-
+    try:
+        # 시트에서 데이터 읽기 (ttl=0은 캐시 없이 실시간으로 가져온다는 뜻)
+        df = conn.read(ttl="0s")
+        return df.to_dict(orient="records")
+    except:
+        return []
 
 def save_data(db_path, data_list):
-    with open(db_path, "w", encoding="utf-8") as f:
-        json.dump(data_list, f, ensure_ascii=False, indent=4)
+    # 리스트 데이터를 표(DataFrame)로 변환해서 시트에 저장
+    df = pd.DataFrame(data_list)
+    conn.update(data=df)
 
 
 def make_thumbnail(image):

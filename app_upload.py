@@ -14,7 +14,7 @@ import base64
 # 1. 사용자 계정 및 API 설정
 # ==========================================
 USER_REGISTRY = {
-    "C12": {"pw": "241130", "db": "diet_db.json"},
+    "C12": {"pw": st.secrets["auth"]["C12_PW"], "db": "diet_db.json"},
 }
 
 MY_KEY = st.secrets["GEMINI_API_KEY"]

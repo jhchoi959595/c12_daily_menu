@@ -32,17 +32,22 @@ def load_data(db_path):
         return []
 
 def save_data(db_path, data_list):
-    # 만약 데이터가 비어있다면 (리스트가 [] 인 경우)
+    # 1. 안전장치: 불러온 데이터(data_list)가 비어있다면 업데이트를 중단합니다.
+    # 이렇게 하면 로딩 오류 시 기존 데이터를 빈 값으로 덮어쓰는 것을 방지합니다.
     if not data_list:
-        # 빈 데이터프레임을 만들되, 컬럼명(항목 이름)은 유지해주는 게 좋습니다.
-        # 기존 시트의 헤더 컬럼 이름들을 적어주세요.
-        df = pd.DataFrame(columns=["id", "date", "food", "grade", "full_text", "thumb"])
-    else:
-        # 데이터가 있으면 정상적으로 변환
-        df = pd.DataFrame(data_list)
+        st.warning("저장할 데이터가 없습니다. 기존 데이터를 보호하기 위해 업데이트를 건너뜁니다.")
+        return
+
+    # 2. 데이터프레임 변환
+    df = pd.DataFrame(data_list)
     
-    # 구글 시트 업데이트
-    conn.update(data=df)
+    # 3. 구글 시트 업데이트 수행
+    try:
+        conn.update(data=df)
+        # 4. 저장 성공 후 캐시를 삭제하여 다음 로드 시 최신 데이터를 가져오게 합니다.
+        st.cache_data.clear() 
+    except Exception as e:
+        st.error(f"시트 저장 중 오류가 발생했습니다: {e}")
 
 
 def make_thumbnail(image):
